@@ -16,7 +16,7 @@ def get_queue_url(queue_name):
 def fetch_request_sqs(queue_name):
     if message_cache:
         message = message_cache.pop(0)
-        return message["Body"], message["ReceiptHandle"]
+        return message["ReceiptHandle"], message["Body"]
     url = get_queue_url(queue_name)
     response = sqs_client.receive_message(
         QueueUrl=url,
@@ -27,7 +27,7 @@ def fetch_request_sqs(queue_name):
         return None, None
     message_cache.extend(response["Messages"])
     message = message_cache.pop(0)
-    return message["Body"], message["ReceiptHandle"]
+    return message["ReceiptHandle"], message["Body"]
 
 
 def delete_request_sqs(queue_name, receipt_handle):

@@ -3,18 +3,16 @@ import json
 import time
 import logging
 
-from django.utils.datetime_safe import datetime
-
 from widget_storage import store_widget
-from request_source import fetch_request, delete_request
+from request_source import fetch_request, delete_request, fetch_request_sqs, delete_request_sqs
 
 parser = argparse.ArgumentParser(description="My program")
 parser.add_argument("--storage-target", required=True, choices=["s3", "dynamodb"], help="Either 's3' or 'dynamodb'")
 parser.add_argument("--widget-destination", required=True, help="s3 bucket or dynamodb table where consumer writes to")
 
 bucketOrQueue = parser.add_mutually_exclusive_group(required=True)
-bucketOrQueue.add_argument("--request-bucket", required=True, help="s3 bucket where producer writes to and the consumer reads from")
-bucketOrQueue.add_argument("--request-queue", required=True, help="SQS queue where consumer writes to")
+bucketOrQueue.add_argument("--request-bucket", help="s3 bucket where producer writes to and the consumer reads from")
+bucketOrQueue.add_argument("--request-queue", help="SQS queue where consumer writes to")
 
 args = parser.parse_args()
 
@@ -23,6 +21,7 @@ args = parser.parse_args()
 request_bucket = args.request_bucket
 storage_target = args.storage_target
 widget_destination = args.widget_destination
+request_queue = args.request_queue
 
 logging.basicConfig(
       level=logging.INFO,
@@ -35,7 +34,7 @@ if __name__ == "__main__":
     print("Running main function...")
     n = 1
     while True:
-        key, request = fetch_request(request_bucket)
+        key, request = fetch_request(request_bucket) if args.request_queue is None else fetch_request_sqs(request_queue)
         if request is not None:
             try:
                 data = json.loads(request) # convert json string to python dictionary
@@ -68,6 +67,6 @@ if __name__ == "__main__":
                 print("Error processing request: " + str(e))
                 logger.info("Error processing request: " + str(e))
             if key is not None:
-                delete_request(request_bucket, key)
+                delete_request(request_bucket, key) if args.request_queue is None else delete_request_sqs(request_queue, key)
         else:
             time.sleep(0.1)
