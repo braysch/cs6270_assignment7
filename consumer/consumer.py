@@ -3,7 +3,7 @@ import json
 import time
 import logging
 
-from widget_storage import store_widget
+from widget_storage import store_widget, update_widget, delete_widget
 from request_source import fetch_request, delete_request, fetch_request_sqs, delete_request_sqs
 
 parser = argparse.ArgumentParser(description="My program")
@@ -55,11 +55,21 @@ if __name__ == "__main__":
                             print("Failed to store item")
                             logger.info("Failed to store item")
                     case "update":
-                        print("This type is not yet implemented - skipping")
-                        logger.info("This type is not yet implemented - skipping")
+                        success = update_widget(storage_target, data, widget_destination)
+                        if success:
+                            print("Item updated successfully")
+                            logger.info("Item updated successfully")
+                        else:
+                            print("Failed to update item")
+                            logger.info("Failed to update item")
                     case "delete":
-                        print("This type is not yet implemented - skipping")
-                        logger.info("This type is not yet implemented - skipping")
+                        success = delete_widget(storage_target, data, widget_destination)
+                        if success:
+                            print("Item deleted successfully")
+                            logger.info("Item deleted successfully")
+                        else:
+                            print("Failed to delete item")
+                            logger.info("Failed to delete item")
                     case _:
                         print("Unknown request type: " + request_type)
                         logger.info("Unknown request type: " + request_type)
